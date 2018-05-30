@@ -9,13 +9,22 @@
           left: 0px;
           background: transparent;
         }
+        #background {
+          z-index: -2;
+        }
+        #main {
+          z-index: -1;
+        }
+        #ship {
+          z-index: 0;
+        }
       </style>
   </head>
-  <body onload="init()">
+  <body>
     <h1>Space Shooter Demo</h1>
-    <canvas id="background" width="600" height="360">
-      Your browser does not support this game :(
-    </canvas>
-    <script src="spaceShooterPartOne.js"></script>
+    <canvas id="background" width="600" height="360">Your browser does not support this game :(</canvas>
+    <canvas id="main" width="600" height="360"></canvas>
+    <canvas id="ship" width="600" height="360"></canvas>
+    <script src="spaceShooter.js"></script>
   </body>
 </html>
