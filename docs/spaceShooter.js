@@ -70,13 +70,33 @@ Background.prototype = new Drawable();
 function Game() {
   this.init = function () {
     this.bgCanvas = document.getElementById('background');
+    this.shipCanvas = document.getElementById('ship');
+    this.mainCanvas = document.getElementById('main');
     if (this.bgCanvas.getContext) {
       this.bgContext = this.bgCanvas.getContext('2d');
+      this.shipContext = this.shipCanvas.getContext('2d');
+      this.mainContext = this.mainCanvas.getContext('2d');
+
       Background.prototype.context = this.bgContext;
       Background.prototype.canvasWidth = this.bgCanvas.width;
       Background.prototype.canvasHeight = this.bgCanvas.height;
+
+      Ship.prototype.context = this.shipContext;
+      Ship.prototype.canvasWidth = this.shipCanvas.width;
+      Ship.prototype.canvasHeight = this.shipCanvas.height;
+
+      Bullet.prototype.context = this.mainContext;
+      Bullet.prototype.canvasWidth = this.mainCanvas.width;
+      Bullet.prototype.convasHeight = this.mainCanvas.height;
+
       this.background = new Background();
       this.background.init(0,0);
+
+      this.ship = new Ship();
+      var shipStartX = this.shipCanvas.width/2 - imageRepository.spaceship.width;
+      var shipStartY = this.shipCanvas.height/4*3 + imageRepository.spaceship.height*2;
+      this.ship.init(shipStartX, shipStartY, imageRepository.spaceship.width, imageRepository.spaceship.height);
+
       return true;
     } else {
       return false;
@@ -92,6 +112,8 @@ function Game() {
 function animate() {
   requestAnimFrame(animate);
   game.background.draw();
+  game.ship.move();
+  game.ship.bulletPool.animate();
 }
 
 window.requestAnimFrame = (function () {
@@ -124,7 +146,7 @@ function Pool(maxSize) {
     }
   };
 
-  this.get = function(x, y, speen) {
+  this.get = function(x, y, speed) {
     if (!pool[size - 1].alilve) {
       pool[size - 1].spawn(x, y, speed);
       pool.unshift(pool.pop());
@@ -141,7 +163,7 @@ function Pool(maxSize) {
   this.animate = function () {
     for (var i=0; i<size; i++) {
       if (pool[i].alive) {
-        if (pool[i].draw) {
+        if (pool[i].draw()) {
           pool[i].clear();
           pool.push((pool.splice(i,1))[0]);
         }
@@ -198,7 +220,7 @@ function Ship() {
 
   this.move = function () {
     counter++;
-    if (KEY_STATUS.left || KEY_STATUS.right || KEY_STATUS.down || KEY_STATUS.UP) {
+    if (KEY_STATUS.left || KEY_STATUS.right || KEY_STATUS.down || KEY_STATUS.up) {
       this.context.clearRect(this.x, this.y, this.width, this.height);
       if (KEY_STATUS.left) {
         this.x -= this.speed;
@@ -229,3 +251,36 @@ function Ship() {
   };
 }
 Ship.prototype = new Drawable();
+
+KEY_CODES = {
+  32: 'space',
+  37: 'left',
+  38: 'up',
+  39: 'right',
+  40: 'down',
+  74: 'left',
+  73: 'up',
+  75: 'down',
+  76: 'right',
+}
+
+KEY_STATUS = {};
+for (code in KEY_CODES) {
+  KEY_STATUS[ KEY_CODES[ code ]] = false;
+}
+
+document.onkeydown = function (e) {
+  var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+  if (KEY_CODES[keyCode]) {
+    e.preventDefault();
+    KEY_STATUS[KEY_CODES[keyCode]] = true;
+  }
+}
+
+document.onkeyup = function (e) {
+  var keyCode = (e.keyCode) ? e.keyCode : e.charCode;
+  if (KEY_CODES[keyCode]) {
+    e.preventDefault();
+    KEY_STATUS[KEY_CODES[keyCode]] = false;
+  }
+}
