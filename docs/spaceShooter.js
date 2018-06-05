@@ -9,21 +9,14 @@ function init() {
  * created once. This type of object is known as a singleton.
  */
 var imageRepository = new function () {
+  var numImages = 5;
+  var numLoaded = 0;
+
   this.background = new Image();
   this.spaceship = new Image();
   this.bullet = new Image();
   this.enemy = new Image();
   this.enemyBullet = new Image();
-
-  var numImages = 5;
-  var numLoaded = 0;
-
-  function imageLoaded() {
-    numLoaded++;
-    if (numLoaded === numImages) {
-      window.init();
-    }
-  }
 
   this.background.onload = function () { imageLoaded(); };
   this.spaceship.onload = function () { imageLoaded(); };
@@ -36,6 +29,13 @@ var imageRepository = new function () {
   this.bullet.src = "bullet.png";
   this.enemy.src = "enemy.png";
   this.enemyBullet.src = "enemy-bullet.png";
+
+  function imageLoaded() {
+    numLoaded++;
+    if (numLoaded === numImages) {
+      window.init();
+    }
+  }
 }
 
 /**
