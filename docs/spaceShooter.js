@@ -9,33 +9,32 @@ function init() {
  * created once. This type of object is known as a singleton.
  */
 var imageRepository = new function () {
-  var numImages = 5;
-  var numLoaded = 0;
+  //
+  // too fucking tricky by far. loading is the number of images to load. each
+  // Image is given a function to run onload. it will decrement loading then
+  // check if "not loading" is true (i.e. loading == 0).
+  //
+  var loading = 5;
 
   this.background = new Image();
-  this.spaceship = new Image();
-  this.bullet = new Image();
-  this.enemy = new Image();
-  this.enemyBullet = new Image();
-
-  this.background.onload = function () { imageLoaded(); };
-  this.spaceship.onload = function () { imageLoaded(); };
-  this.bullet.onload = function () { imageLoaded(); };
-  this.enemy.onload = function () { imageLoaded(); };
-  this.enemyBullet.onload = function () { imageLoaded(); };
-
   this.background.src = "background.png";
-  this.spaceship.src = "spaceship.png";
-  this.bullet.src = "bullet.png";
-  this.enemy.src = "enemy.png";
-  this.enemyBullet.src = "enemy-bullet.png";
+  this.background.onload = function () { if (!--loading) { window.init(); } };
 
-  function imageLoaded() {
-    numLoaded++;
-    if (numLoaded === numImages) {
-      window.init();
-    }
-  }
+  this.spaceship = new Image();
+  this.spaceship.src = "spaceship.png";
+  this.spaceship.onload = function () { if (!--loading) { window.init(); } };
+
+  this.bullet = new Image();
+  this.bullet.src = "bullet.png";
+  this.bullet.onload = function () { if (!--loading) { window.init(); } };
+
+  this.enemy = new Image();
+  this.enemy.src = "enemy.png";
+  this.enemy.onload = function () { if (!--loading) { window.init(); } };
+
+  this.enemyBullet = new Image();
+  this.enemyBullet.src = "enemy-bullet.png";
+  this.enemyBullet.onload = function () { if (!--loading) { window.init(); } };
 }
 
 /**
@@ -233,7 +232,7 @@ function Bullet(object) {
   this.draw = function () {
     this.context.clearRect(this.x, this.y, this.width, this.height);
     this.y -= this.speed;
-    console.log(`Bullet#height ${self} -- y: ${this.y}, height: ${this.height}, canvasHeight: ${this.canvasHeight}`)
+    // console.log(`Bullet#height ${self} -- y: ${this.y}, height: ${this.height}, canvasHeight: ${this.canvasHeight}`)
     if (self === "bullet" && this.y <= 0 - this.height) {
       return true;
     } else if (self === "enemyBullet" && this.y <= 0 - this.height) {
