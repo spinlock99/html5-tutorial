@@ -1,0 +1,9 @@
+{
+  "name": "html5-tutorial",
+  "version": "0.1",
+  "description": "Simple HTML5 Galaxian Clone",
+  "main": "./docs/spaceShooter.js",
+  "repository": "git@github.com:spinlock99/html5-tutorial.git",
+  "author": "Andrew Dixon <info@largearcade.com>",
+  "license": "MIT"
+}

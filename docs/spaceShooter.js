@@ -9,33 +9,34 @@ function init() {
  * created once. This type of object is known as a singleton.
  */
 var imageRepository = new function () {
+  //
+  // too fucking tricky by far. loading is the number of images to load. each
+  // Image is given a function to run onload. it will decrement loading then
+  // check if "not loading" is true (i.e. loading == 0).
+  //
+  var loading = 5;
+  function loadImage() { if (!--loading) { window.init(); } };
+
   this.background = new Image();
-  this.spaceship = new Image();
-  this.bullet = new Image();
-  this.enemy = new Image();
-  this.enemyBullet = new Image();
-
-  var numImages = 5;
-  var numLoaded = 0;
-
-  function imageLoaded() {
-    numLoaded++;
-    if (numLoaded === numImages) {
-      window.init();
-    }
-  }
-
-  this.background.onload = function () { imageLoaded(); };
-  this.spaceship.onload = function () { imageLoaded(); };
-  this.bullet.onload = function () { imageLoaded(); };
-  this.enemy.onload = function () { imageLoaded(); };
-  this.enemyBullet.onload = function () { imageLoaded(); };
-
   this.background.src = "background.png";
+  this.background.onload = loadImage;
+
+  this.spaceship = new Image();
   this.spaceship.src = "spaceship.png";
+  this.spaceship.onload = loadImage;
+
+  this.bullet = new Image();
   this.bullet.src = "bullet.png";
+  this.bullet.onload = loadImage;
+
+  this.enemy = new Image();
   this.enemy.src = "enemy.png";
+  this.enemy.onload = loadImage;
+
+  this.enemyBullet = new Image();
   this.enemyBullet.src = "enemy-bullet.png";
+  this.enemyBullet.onload = loadImage;
+
 }
 
 /**
@@ -55,8 +56,7 @@ function Drawable() {
   this.canvasWidth = 0;
   this.canvasHeight = 0;
 
-  this.draw = function () {
-  };
+  this.draw = function () {};
 }
 
 /**
@@ -99,7 +99,7 @@ function Game() {
 
       Bullet.prototype.context = this.mainContext;
       Bullet.prototype.canvasWidth = this.mainCanvas.width;
-      Bullet.prototype.convasHeight = this.mainCanvas.height;
+      Bullet.prototype.canvasHeight = this.mainCanvas.height;
 
       Enemy.prototype.context = this.mainContext;
       Enemy.prototype.canvasWidth = this.mainCanvas.width;
@@ -140,6 +140,7 @@ function Game() {
 
   // Start the animation loop:
   this.start = function () {
+    this.ship.draw();
     animate();
   };
 }
@@ -233,10 +234,9 @@ function Bullet(object) {
   this.draw = function () {
     this.context.clearRect(this.x, this.y, this.width, this.height);
     this.y -= this.speed;
-    console.log(`Bullet#height ${self} -- y: ${this.y}, height: ${this.height}, canvasHeight: ${this.canvasHeight}`)
     if (self === "bullet" && this.y <= 0 - this.height) {
       return true;
-    } else if (self === "enemyBullet" && this.y <= 0 - this.height) {
+    } else if (self === "enemyBullet" && this.y >= this.canvasHeight) {
       return true;
     } else {
       if (self === "bullet") {
