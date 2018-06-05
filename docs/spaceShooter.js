@@ -15,26 +15,28 @@ var imageRepository = new function () {
   // check if "not loading" is true (i.e. loading == 0).
   //
   var loading = 5;
+  function loadImage() { if (!--loading) { window.init(); } };
 
   this.background = new Image();
   this.background.src = "background.png";
-  this.background.onload = function () { if (!--loading) { window.init(); } };
+  this.background.onload = loadImage;
 
   this.spaceship = new Image();
   this.spaceship.src = "spaceship.png";
-  this.spaceship.onload = function () { if (!--loading) { window.init(); } };
+  this.spaceship.onload = loadImage;
 
   this.bullet = new Image();
   this.bullet.src = "bullet.png";
-  this.bullet.onload = function () { if (!--loading) { window.init(); } };
+  this.bullet.onload = loadImage;
 
   this.enemy = new Image();
   this.enemy.src = "enemy.png";
-  this.enemy.onload = function () { if (!--loading) { window.init(); } };
+  this.enemy.onload = loadImage;
 
   this.enemyBullet = new Image();
   this.enemyBullet.src = "enemy-bullet.png";
-  this.enemyBullet.onload = function () { if (!--loading) { window.init(); } };
+  this.enemyBullet.onload = loadImage;
+
 }
 
 /**
@@ -54,8 +56,7 @@ function Drawable() {
   this.canvasWidth = 0;
   this.canvasHeight = 0;
 
-  this.draw = function () {
-  };
+  this.draw = function () {};
 }
 
 /**
@@ -98,7 +99,7 @@ function Game() {
 
       Bullet.prototype.context = this.mainContext;
       Bullet.prototype.canvasWidth = this.mainCanvas.width;
-      Bullet.prototype.convasHeight = this.mainCanvas.height;
+      Bullet.prototype.canvasHeight = this.mainCanvas.height;
 
       Enemy.prototype.context = this.mainContext;
       Enemy.prototype.canvasWidth = this.mainCanvas.width;
@@ -139,6 +140,7 @@ function Game() {
 
   // Start the animation loop:
   this.start = function () {
+    this.ship.draw();
     animate();
   };
 }
@@ -232,10 +234,9 @@ function Bullet(object) {
   this.draw = function () {
     this.context.clearRect(this.x, this.y, this.width, this.height);
     this.y -= this.speed;
-    // console.log(`Bullet#height ${self} -- y: ${this.y}, height: ${this.height}, canvasHeight: ${this.canvasHeight}`)
     if (self === "bullet" && this.y <= 0 - this.height) {
       return true;
-    } else if (self === "enemyBullet" && this.y <= 0 - this.height) {
+    } else if (self === "enemyBullet" && this.y >= this.canvasHeight) {
       return true;
     } else {
       if (self === "bullet") {
