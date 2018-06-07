@@ -1,8 +1,6 @@
 var game = new Game();
 
-function init() {
-  if (game.init()) game.start();
-}
+function init() { game.init(); }
 
 /**
  * Define an object to hold all our images for the game so images are only ever
@@ -142,7 +140,28 @@ function Game() {
 
       this.enemyBulletPool = new Pool(50);
       this.enemyBulletPool.init("enemyBullet");
+
+      // Start QuadTree
       this.quadTree = new QuadTree({ x:0, y:0, width: this.mainCanvas.width, height: this.mainCanvas.height });
+
+      // Audio Files
+      this.laser = new SoundPool(10);
+      this.laser.init("laser");
+
+      this.explosion = new SoundPool(20);
+      this.explosion.init("explosion");
+
+      this.backgroundAudio = new Audio("sounds/kick_shock.mp3");
+      this.backgroundAudio.loop = true;
+      this.backgroundAudio.volume = .25;
+      this.backgroundAudio.load();
+
+      this.gameOverAudio = new Audio("sounds/game_over.mp3");
+      this.gameOverAudio.loop = true;
+      this.gameOverAudio.volume = .25;
+      this.gameOverAudio.load();
+
+      this.checkAudio = window.setInterval(function () { checkReadyState() }, 1000);
 
       return true;
     } else {
@@ -153,6 +172,7 @@ function Game() {
   // Start the animation loop:
   this.start = function () {
     this.ship.draw();
+    this.backgroundAudio.play();
     animate();
   };
 }
@@ -369,6 +389,7 @@ function Ship() {
    */
   this.fire = function () {
     this.bulletPool.getTwo(this.x+6, this.y, 3, this.x+33, this.y, 3);
+    game.laser.get();
   };
 }
 Ship.prototype = new Drawable();
@@ -444,6 +465,7 @@ function Enemy() {
 
     if (this.isColliding) {
       game.playerScore += 10;
+      game.explosion.get();
       return true;
     }
 
@@ -641,4 +663,49 @@ function QuadTree(boundBox, lvl) {
           height: subHeight
         }, level+1);
       };
+}
+
+function SoundPool(maxSize) {
+  var size = maxSize;
+  var pool = [];
+  this.pool = pool;
+  var currSound = 0;
+  /*
+   * Populates the pool array with the given sound.
+   */
+  this.init = function (object) {
+    if (object == "laser") {
+      for (var i = 0; i < size; i++) {
+        // Initialize the sound
+        laser = new Audio("sounds/laser.mp3");
+        laser.volume = .12;
+        laser.load();
+        pool[i] = laser;
+      }
+    } else if (object == "explosion") {
+      for (var i = 0; i < size; i++) {
+        var explosion = new Audio("sounds/explosion.mp3");
+        explosion.volume = .1;
+        explosion.load();
+        pool[i] = explosion;
+      }
+    }
+  };
+
+  /*
+   * Plays a sound
+   */
+  this.get = function () {
+    if(pool[currSound].currentTime == 0 || pool[currSound].ended) {
+      pool[currSound].play();
+    }
+    currSound = (currSound + 1) % size;
+  };
+}
+
+function checkReadyState() {
+  if (game.gameOverAudio.readyState === 4 && game.backgroundAudio.readyState === 4) {
+    window.clearInterval(game.checkAudio);
+    game.start();
+  }
 }
