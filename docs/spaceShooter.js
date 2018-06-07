@@ -90,6 +90,8 @@ Background.prototype = new Drawable();
  */
 function Game() {
   this.init = function () {
+    this.playerScore = 0;
+
     this.bgCanvas = document.getElementById('background');
     this.shipCanvas = document.getElementById('ship');
     this.mainCanvas = document.getElementById('main');
@@ -156,6 +158,7 @@ function Game() {
 }
 
 function animate() {
+  document.getElementById("score").innerHTML = game.playerScore;
   // Insert objects into quad tree
   game.quadTree.clear();
   game.quadTree.insert(game.ship);
@@ -439,7 +442,10 @@ function Enemy() {
       this.speedX = -this.speed;
     }
 
-    if (this.isColliding) { return true; }
+    if (this.isColliding) {
+      game.playerScore += 10;
+      return true;
+    }
 
     this.context.drawImage(imageRepository.enemy, this.x, this.y);
     chance = Math.floor(Math.random()*101);
