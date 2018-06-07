@@ -88,8 +88,6 @@ Background.prototype = new Drawable();
  */
 function Game() {
   this.init = function () {
-    this.playerScore = 0;
-
     this.bgCanvas = document.getElementById('background');
     this.shipCanvas = document.getElementById('ship');
     this.mainCanvas = document.getElementById('main');
@@ -118,31 +116,21 @@ function Game() {
       this.background.init(0,0);
 
       this.ship = new Ship();
-      var shipStartX = this.shipCanvas.width/2 - imageRepository.spaceship.width;
-      var shipStartY = this.shipCanvas.height/4*3 + imageRepository.spaceship.height*2;
-      this.ship.init(shipStartX, shipStartY, imageRepository.spaceship.width, imageRepository.spaceship.height);
+      this.shipStartX = this.shipCanvas.width/2 - imageRepository.spaceship.width;
+      this.shipStartY = this.shipCanvas.height/4*3 + imageRepository.spaceship.height*2;
+      this.ship.init(this.shipStartX, this.shipStartY, imageRepository.spaceship.width, imageRepository.spaceship.height);
 
       this.enemyPool = new Pool(30);
       this.enemyPool.init("enemy");
-      var height = imageRepository.enemy.height;
-      var width = imageRepository.enemy.width;
-      var x = 100;
-      var y = -height;
-      var spacer = y * 1.5;
-      for (var i=1; i<=18; i++) {
-        this.enemyPool.get(x, y, 2);
-        x += width + 25
-        if (i % 6 == 0) {
-          x = 100;
-          y += spacer
-        }
-      }
+      this.spawnWave();
 
       this.enemyBulletPool = new Pool(50);
       this.enemyBulletPool.init("enemyBullet");
 
       // Start QuadTree
       this.quadTree = new QuadTree({ x:0, y:0, width: this.mainCanvas.width, height: this.mainCanvas.height });
+
+      this.playerScore = 0;
 
       // Audio Files
       this.laser = new SoundPool(10);
@@ -162,18 +150,62 @@ function Game() {
       this.gameOverAudio.load();
 
       this.checkAudio = window.setInterval(function () { checkReadyState() }, 1000);
+    }
+  };
 
-      return true;
-    } else {
-      return false;
+  this.spawnWave = function () {
+    var height = imageRepository.enemy.height;
+    var width = imageRepository.enemy.width;
+    var x = 100;
+    var y = -height;
+    var spacer = y * 1.5;
+    for (var i=1; i<=18; i++) {
+      this.enemyPool.get(x, y, 2);
+      x += width + 25
+      if (i % 6 == 0) {
+        x = 100;
+        y += spacer
+      }
     }
   };
 
   // Start the animation loop:
   this.start = function () {
+    console.log("start", this.ship)
     this.ship.draw();
     this.backgroundAudio.play();
     animate();
+  };
+
+  this.gameOver = function () {
+    console.log("gameOver")
+    this.backgroundAudio.pause();
+    this.gameOverAudio.currentTime = 0;
+    this.gameOverAudio.play();
+    document.getElementById("game-over").style.display = "block";
+  };
+
+  this.restart = function () {
+    console.log("restart");
+    this.gameOverAudio.pause();
+    document.getElementById("game-over").style.display = "none";
+    this.bgContext.clearRect(0, 0, this.bgCanvas.width, this.bgCanvas.height);
+    this.shipContext.clearRect(0, 0, this.shipCanvas.width, this.shipCanvas.height);
+    this.mainContext.clearRect(0, 0, this.mainCanvas.width, this.mainCanvas.height);
+
+    this.quadTree.clear();
+
+    this.background.init(0, 0);
+    this.ship.init(this.shipStartX, this.shipStartY, imageRepository.spaceship.width, imageRepository.spaceship.height);
+    this.enemyPool.init("enemy");
+    this.spawnWave();
+
+    this.enemyBulletPool.init("enemyBullet");
+    this.playerScore = 0;
+    this.backgroundAudio.currentTime = 0;
+    this.backgroundAudio.play();
+
+    this.start();
   };
 }
 
@@ -185,15 +217,23 @@ function animate() {
   game.quadTree.insert(game.ship.bulletPool.getPool());
   game.quadTree.insert(game.enemyPool.getPool());
   game.quadTree.insert(game.enemyBulletPool.getPool());
+
   detectCollision();
 
-  // Animate game objects
-  requestAnimFrame(animate);
-  game.background.draw();
-  game.ship.move();
-  game.ship.bulletPool.animate();
-  game.enemyPool.animate();
-  game.enemyBulletPool.animate();
+  if (game.enemyPool.getPool().length === 0) {
+    game.spawnWave();
+  }
+
+  if (game.ship.alive) {
+    // Animate game objects
+    requestAnimFrame(animate);
+    game.background.draw();
+    game.ship.move();
+    game.ship.bulletPool.animate();
+    game.enemyPool.animate();
+    game.enemyBulletPool.animate();
+  }
+
 }
 
 function detectCollision() {
@@ -355,7 +395,18 @@ function Ship() {
   this.collidableWith = "enemyBullet";
   this.type = "ship";
 
+  this.init = function(x, y, width, height) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.alive = true;
+    this.isColliding = false;
+    this.bulletPool.init("bullet");
+  }
+
   this.draw = function () {
+    console.log("draw")
     this.context.drawImage(imageRepository.spaceship, this.x, this.y);
   };
 
@@ -376,7 +427,12 @@ function Ship() {
         this.y += this.speed;
         if (this.y >= this.canvasHeight - this.height) this.y = this.canvasHeight - this.height;
       }
-      if (!this.isColliding) { this.draw(); }
+      if (!this.isColliding) {
+        this.draw();
+      } else {
+        this.alive = false;
+        game.gameOver();
+      }
     }
     if (KEY_STATUS.space && counter >= fireRate && !this.isColliding) {
       this.fire();
